@@ -1,0 +1,4 @@
+Value lineCardModel ([A-Z0-9\-]+)
+
+Start
+  ^Linecard\d{1,2}\s+${lineCardModel}\s+\d{2}\.\d{2}\s+[A-Z0-9]{11}\s+\d{4}\-\d{2}\-\d{2}\s+\d{2}\.\d{2}

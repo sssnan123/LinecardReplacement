@@ -1,0 +1,25 @@
+{{- "configure exclusive\n" -}}
+{{- "\n" -}}
+{%- for interfaceInfo in interfaces_info -%}
+  {%- set interfaceName = interfaceInfo.interfaceName -%}
+  {{- ("delete interfaces " + interfaceName + " disable\n") | indent(8, True, False) -}}
+{%- endfor -%}
+{{- "\n" -}}
+{{- "show | compare\n" | indent(8, True, False) -}}
+{{- "commit and-quit\n" | indent(8, True, False) -}}
+{{- "\n" -}}
+{{- "# Verify the interfaces are down\n" | indent(8, True, False) -}}
+{{- "\n" -}}
+{%- for interfaceInfo in interfaces_info -%}
+  {%- set interfaceName = interfaceInfo.interfaceName -%}
+  {{- ("show interfaces " + interfaceName + " extensive | no-more | match \"last|local|phy|desc|error\"\n") | indent(8, True, False) -}}
+{%- endfor -%}
+{{- "\n" -}}
+{{- "# Verify no packet loss and light levels\n" | indent(8, True, False) -}}
+{{- "\n" -}}
+{%- for interfaceInfo in interfaces_info -%}
+  {%- set sourceIP = interfaceInfo.sourceIP -%}
+  {%- set destinationIP = interfaceInfo.destinationIP -%}
+  {{- ("ping " + destinationIP + " source " + sourceIP + " count 100 size 8972 do-not-fragment rapid bypass-routing\n") | indent(8, True, False) -}}
+{%- endfor -%}
+{{- "\n" -}}

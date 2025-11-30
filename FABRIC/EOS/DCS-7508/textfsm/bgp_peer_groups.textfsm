@@ -1,0 +1,11 @@
+Value groupName (.+)
+Value List members (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})
+Value peerAS (\d+)
+
+Start
+  ^BGP -> Continue.Record 
+  ^BGP\s+peer\-group\s+is\s+${groupName}\,\s+remote\s+AS\s+${peerAS}\,\s+peer-group.+
+  ^\s+BGP\s+version\s+\d
+  ^\s+Static\s+peer\-group\s+members\:
+  ^\s+VRF\s+default\:
+  ^\s+${members}\,\s+state\:\s+.+

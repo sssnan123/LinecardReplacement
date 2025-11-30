@@ -1,0 +1,28 @@
+---
+- name: Get BGP Groups
+  set_fact:
+    bgp_groups: |-
+      {%- set bgpGroups = [] -%}
+      {%- set bgpGroupConfig = device_config.stdout[0].configuration.protocols.bgp.group -%}
+      {%- for config in bgpGroupConfig -%}
+        {%- set name = config["name"] -%}
+        {%- set members = [] -%}
+        {%- set peerAS = "" -%}
+        {%- if "BMC_V6" not in name -%}
+          {%- set neighbors = config["neighbor"] -%}
+          {%- set peerAS = neighbors[0]["peer-as"] -%}
+          {%- for neighbor in neighbors -%}
+            {%- set name = neighbor["name"] -%}
+            {%- set description = neighbor["description"] -%}
+            {%- set member = {"name": name, "description": description} -%}
+            {%- set temp = members.append(member) -%}
+          {%- endfor -%}
+        {%- endif -%}
+        {%- set bgpGroup = {"groupName": name, "members": members, "peerAS": peerAS} -%}
+        {%- set temp = bgpGroups.append(bgpGroup) -%}
+      {%- endfor -%}
+      {{- bgpGroups -}}
+
+- name: Print BGP Groups
+  debug:
+    var: bgp_groups

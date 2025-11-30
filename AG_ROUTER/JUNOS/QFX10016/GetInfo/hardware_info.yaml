@@ -1,0 +1,21 @@
+---
+- name: RPC get-chassis-inventory
+  junos_command:
+    rpcs:
+    - get-chassis-inventory
+    format: json
+  register: result
+
+- name: Get Output
+  set_fact:
+    fpc_model: |-
+      {%- set modules = result.stdout[0]["chassis-inventory"][0]["chassis"][0]["chassis-module"] -%}
+      {%- for module in modules -%}
+        {%- if module["name"][0]["data"] == "FPC " + fpcNumber -%}
+          {{- module["model-number"][0]["data"] -}}
+        {%- endif -%}
+      {%- endfor -%}
+
+- name: "{{ 'Print FPC ' + fpcNumber + ' Model' }}"
+  debug:
+    var: fpc_model

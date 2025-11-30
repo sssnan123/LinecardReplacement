@@ -1,0 +1,13 @@
+---
+- name: Run Command "show running-config | include router bgp"
+  eos_command:
+    commands: show running-config | include router bgp
+  register: result
+
+- name: Get Output
+  set_fact:
+    bgp_process: "{{ (result.stdout[0] | parse_cli_textfsm('./textfsm/bgp_process.textfsm'))[0].bgpProcess }}"
+
+- name: Print BGP Process
+  debug:
+    var: bgp_process

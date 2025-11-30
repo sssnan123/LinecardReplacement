@@ -1,0 +1,45 @@
+---
+- name: Get Policies
+  import_tasks: policies.yaml
+
+- name: Get BGP Groups
+  import_tasks: bgp_groups.yaml
+
+- name: Get BGP Groups Info
+  set_fact:
+    bgpGroupsInfo: |-
+      {%- set bgpGroupsInfo = [] -%}
+      {%- for bgpGroup in bgp_groups -%}
+        {%- set groupName = bgpGroup.groupName -%}
+        {%- set destination = "" -%}
+        {%- if "_V" in groupName -%}
+          {%- set destination = groupName.split("_TO_")[1].split("_V")[0] -%}
+        {%- else -%}
+          {%- set destination = groupName.split("_TO_")[1] -%}
+        {%- endif -%}
+        {%- set import = [] -%}
+        {%- set export = [] -%}
+        {%- if "BMC_V6" in groupName -%}
+          {%- set member = "" -%}
+          {%- set peerAS = "" -%}
+        {%- else -%}
+          {%- set member = bgpGroup.members[0]["name"] -%}
+          {%- set peerAS = bgpGroup.peerAS -%}
+        {%- endif -%}
+        {%- for policy in policies -%}
+          {%- set policyName = policy.policyName -%}
+          {%- if destination in policyName and "IMPORT" in policyName -%}
+            {%- set temp = import.append(policyName) -%}
+          {%- endif -%}
+          {%- if destination in policyName and "EXPORT" in policyName -%}
+            {%- set temp = export.append(policyName) -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {%- set bgpGroupInfo = {"groupName": groupName, "member": member, "peerAS": peerAS, "import": import, "export": export} -%}
+        {%- set temp = bgpGroupsInfo.append(bgpGroupInfo) -%}
+      {%- endfor -%}
+      {{- bgpGroupsInfo -}}
+
+- name: Print BGP Groups Info
+  debug:
+    var: bgpGroupsInfo

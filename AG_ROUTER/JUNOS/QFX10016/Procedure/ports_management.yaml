@@ -1,0 +1,10 @@
+---
+- name: Generate Disabling Ports Procedure
+  template:
+    src: disabling_ports.j2
+    dest: ./temp/disabling_ports.txt
+
+- name: Generate Enabling Ports Procedure
+  template:
+    src: enabling_ports.j2
+    dest: ./temp/enabling_ports.txt

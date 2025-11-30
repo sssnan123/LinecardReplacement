@@ -1,0 +1,4 @@
+Value deviceModel (.+)
+
+Start
+  ^Arista\s+${deviceModel}

@@ -1,0 +1,10 @@
+---
+- name: Generate Powering Off Line Card Procedure
+  template:
+    src: powering_off_line_card.j2
+    dest: ./temp/powering_off_line_card.txt
+
+- name: Generate Powering On Line Card Procedure
+  template:
+    src: powering_on_line_card.j2
+    dest: ./temp/powering_on_line_card.txt

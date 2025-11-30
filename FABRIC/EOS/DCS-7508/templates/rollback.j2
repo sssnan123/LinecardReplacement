@@ -1,0 +1,149 @@
++---------------------------------------------------------------------------------------------------+
+### Rollback Plan: Line Card {{ lineCardNumber }} Replacement: {{ inventory_hostname }} {{ device_model }} ###
++---------------------------------------------------------------------------------------------------+
+
+
+
+1) Put device {{ inventory_hostname }} in maintenance mode using:
+
+	https://nseui.muse.vip.ebay.com/device-maintenance
+
+
+
+2) Device cost-out for {{ inventory_hostname }}
+
+2.1) BGP cost-out for {{ inventory_hostname }}
+
+	# Use Device OPS tool to cost out this device
+
+	https://nseui.muse.vip.ebay.com/deviceops
+
+	Device Operation: Cost Out
+	Device Name: {{ inventory_hostname }}
+	Snow Ticket: {{ chg_number }}
+
+	# Device OPS tool is only used to cost out for BGP protocols, please manually execute it if device runs OSPF protocols.
+	# Please execute the following steps if above cost out tool doesn't work.
+
+	# On {{ inventory_hostname }}:
+
+	ping {{ chg_number }}
+
+	{% include "./temp/costing_out.txt" %}
+
+2.2) Verify traffic has stopped on {{ inventory_hostname }}
+
+	# Traffic:
+
+	https://console.sherlock.io/d/zNLv2bKWz/switch-drill-down?var-Name={{ inventory_hostname }}&orgId=1&refresh=5m
+
+	# On {{ inventory_hostname }}:
+
+	show interfaces | no-more | include line|rate
+
+2.3) Disable all the ports on the bad line card
+
+	# On {{ inventory_hostname }}:
+
+	{% include "./temp/disabling_ports.txt" %}
+
+
+
+3) Replace line card {{ lineCardNumber }}
+
+	# If at this point two cards have been tried, and neither works, so we will power down the card to minimize impact
+
+3.1) Power off line card {{ lineCardNumber }}
+
+	# On {{ inventory_hostname }}:
+
+	{% include "./temp/powering_off_line_card.txt" %}
+
+
+	# If e-spare works, so we should use the e-spare one to replace
+
+	# Have Site Services send a picture of the e-spare module via slack.
+	# Verify that it is the same model that needs to be inserted into the device.
+
+	# Ask Site Services to swap out bad line card {{ lineCardNumber }} with e-spare line card {{ line_card_model }}
+	# Ask Site Services to disconnect all the links
+	# Insert e-spare line card {{ line_card_model }} in {{ inventory_hostname }} in line card {{ lineCardNumber }}
+	# Ask Site Services to connect all the links
+
+3.2) Power on e-spare line card {{ lineCardNumber }}
+
+	# On {{ inventory_hostname }}:
+
+	{% include "./temp/powering_on_line_card.txt" %}
+
+	# Verify power consumption and cooling are within limits
+
+	show environment all | no-more
+
+
+
+4) Device cost-in for {{ inventory_hostname }}
+
+4.1) Enable all the ports on the e-spare card:
+
+	# On {{ inventory_hostname }}:
+
+	{% include "./temp/enabling_ports.txt" %}
+
+4.2) BGP cost-in for {{ inventory_hostname }}
+
+	# Use Device OPS tool to cost in this device
+
+	https://nseui.muse.vip.ebay.com/deviceops
+
+	Device Operation: Cost In
+	Device Name: {{ inventory_hostname }}
+	Snow Ticket: {{ chg_number }}
+
+	# Device OPS tool is only used to cost in for BGP protocols, please manually execute it if device runs OSPF protocols.
+	# Please execute the following steps if above cost in tool doesn't work.
+
+	# On {{ inventory_hostname }}:
+
+	ping {{ chg_number }}
+
+	{% include "./temp/costing_in.txt" %}
+
+4.3) Verify traffic has resumed on {{ inventory_hostname }}
+
+	# Traffic:
+
+	https://console.sherlock.io/d/zNLv2bKWz/switch-drill-down?var-Name={{ inventory_hostname }}&orgId=1&refresh=5m
+
+	# On {{ inventory_hostname }}:
+
+	show interfaces | no-more | include line|rate
+
+4.4) Put device {{ inventory_hostname }} back to production mode using:
+
+	https://nseui.muse.vip.ebay.com/device-maintenance
+
+
+
+5) Global Checks
+
+	# Perform mandatory post-checks to determine device health and status after changes have been made.
+
+	# On {{ inventory_hostname }}:
+
+	show version | no-more
+	show logging 100 | no-more
+	show module | no-more
+	show environment all | no-more
+	show processes top
+	show lldp neighbors | no-more
+	show interfaces status | include connected | no-more
+	show interfaces status | include notconnect | no-more
+	show interfaces status | include disabled | no-more
+	show interfaces status | no-more | exclude disabled | TRANS | TRUNK | notconn | unknown
+	show port-channel summary
+	show spanning-tree detail
+	show ip route summary | no-more
+	show ipv6 route summary | no-more
+	show ip bgp summary | no-more
+	show ipv6 bgp summary | no-more

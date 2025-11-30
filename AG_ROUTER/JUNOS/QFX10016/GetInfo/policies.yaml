@@ -1,0 +1,14 @@
+---
+- name: Run Command "show policy | display json"
+  junos_command:
+    commands: show policy
+    format: json
+  register: result
+
+- name: Get Output
+  set_fact:
+    policies: "{{ result.stdout[0].output[0].data | parse_cli_textfsm('./textfsm/policies.textfsm') }}"
+
+- name: Print Policies
+  debug:
+    var: policies

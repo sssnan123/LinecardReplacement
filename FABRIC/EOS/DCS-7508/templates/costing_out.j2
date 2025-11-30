@@ -1,0 +1,32 @@
+{{- "configure terminal\n" -}}
+{{- "\n" -}}
+{{- ("router bgp " + bgp_process + "\n") | indent(8, True, False) -}}
+{{- "\n" -}}
+{%- for bgpPeerGroupInfo in bgpPeerGroupsInfo -%}
+  {%- set groupName = bgpPeerGroupInfo.groupName -%}
+  {%- set routeMaps = bgpPeerGroupInfo.routeMaps -%}
+  {%- set routeMapForCostingOut = namespace(value = "") -%}
+  {%- for routeMap in routeMaps -%}
+    {%- if "COSTOUT" in routeMap -%}
+      {%- set routeMapForCostingOut.value = routeMap -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- set member = bgpPeerGroupInfo.member -%}
+  {%- set command = "neighbor " + groupName + " route-map " + routeMapForCostingOut.value + " out" -%}
+  {{- (command + "\n") | indent(16, True, False) -}}
+{%- endfor -%}
+{{ "\n" }}
+{{- "end\n" | indent(8, True, False) -}}
+{{- "write memory\n" | indent(8, True, False) -}}
+{{- "\n" -}}
+{%- for bgpPeerGroupInfo in bgpPeerGroupsInfo -%}
+  {%- set groupName = bgpPeerGroupInfo.groupName -%}
+  {%- set member = bgpPeerGroupInfo.member -%}
+  {{- ("# Verify " + groupName + " is costed out \n") | indent(8, True, False) -}}
+  {{- "\n" -}}
+  {{- ("show ip bgp summary vrf all\n") | indent(8, True, False) -}}
+  {{- ("show ip bgp summary vrf all | include " + groupName.split("AS")[1]  + "\n") | indent(8, True, False) -}}
+  {{- ("show ip bgp neighbors " + member + " advertised-routes vrf all\n") | indent(8, True, False) -}}
+  {{- ("show ip bgp neighbors " + member + " routes vrf all\n") | indent(8, True, False) -}}
+  {{- "\n" -}}
+{%- endfor -%}

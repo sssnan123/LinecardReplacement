@@ -1,0 +1,7 @@
+---
+- name: Run Command "show configuration | display json"
+  junos_command:
+    commands:
+    - show configuration
+    format: json
+  register: device_config

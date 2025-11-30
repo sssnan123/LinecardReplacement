@@ -1,0 +1,20 @@
+{{- "configure exclusive\n" -}}
+{{- "\n" -}}
+{{- "show | compare\n" | indent(8, True, False) -}}
+{{- "\n" -}}
+{{- ("set chassis fpc " + fpcNumber + " power off\n") | indent(8, True, False) -}}
+{{- "\n" -}}
+{{- "show | compare\n" | indent(8, True, False) -}}
+{{- "commit check\n" | indent(8, True, False) -}}
+{{- "commit and-quit\n" | indent(8, True, False) -}}
+{{- "\n" -}}
+{{- ("# Verify FPC " + fpcNumber + " is powered off\n") | indent(8, True, False) -}}
+{{- "\n" -}}
+{{- ("show chassis fpc " + fpcNumber + "\n") | indent(8, True, False) -}}
+{{- "\n" -}}
+{{- ("# Check FPC " + fpcNumber + " status\n") | indent(8, True, False) -}}
+{{- "\n" -}}
+{{- ("show chassis fpc " + fpcNumber + "\n") | indent(8, True, False) -}}
+{{- ("show chassis hardware clei-models | match fpc\\ " + fpcNumber + "\n") | indent(8, True, False) -}}
+{{- "show chassis alarms\n" | indent(8, True, False) -}}
+{{- "\n" -}}

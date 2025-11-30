@@ -1,0 +1,13 @@
+{{- "configure terminal\n" -}}
+{{- "\n" -}}
+{{- ("no power enable module Linecard " + lineCardNumber + "\n") | indent(8, True, False) -}}
+{{- "\n" -}}
+{{- "end\n" | indent(8, True, False) -}}
+{{- "write memory\n" | indent(8, True, False) -}}
+{{- "\n" -}}
+{{- "# Verify the line card is powered off\n" | indent(8, True, False) -}}
+{{- "\n" -}}
+{{- "show logging 20\n" | indent(8, True, False) -}}
+{{- "show module | no-more\n" | indent(8, True, False) -}}
+{{- ("show module Linecard " + lineCardNumber + "\n") | indent(8, True, False) -}}
+{{- "\n" -}}

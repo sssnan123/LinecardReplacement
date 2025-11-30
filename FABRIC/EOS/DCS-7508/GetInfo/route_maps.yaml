@@ -1,0 +1,14 @@
+---
+- name: Run Command "show route-map expanded | include route-map"
+  arista.eos.eos_command:
+    commands:
+    - command: "show route-map expanded | include route-map"
+  register: result
+
+- name: Get Output
+  set_fact:
+    route_maps: "{{ result.stdout[0] | parse_cli_textfsm('./textfsm/route_maps.textfsm') }}"
+
+- name: Print Route Maps List
+  debug:
+    var: route_maps

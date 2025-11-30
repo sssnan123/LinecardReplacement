@@ -1,0 +1,17 @@
+{{- "configure exclusive\n" -}}
+{{- "\n" -}}
+{%- for interfaceInfo in interfaces_info -%}
+  {%- set interfaceName = interfaceInfo.interfaceName -%}
+  {{- ("set interfaces " + interfaceName + " disable\n") | indent(8, True, False) -}}
+{%- endfor -%}
+{{- "\n" -}}
+{{- "show | compare\n" | indent(8, True, False) -}}
+{{- "commit and-quit\n" | indent(8, True, False) -}}
+{{- "\n" -}}
+{{- "# Verify the interfaces are down\n" | indent(8, True, False) -}}
+{{- "\n" -}}
+{%- for interfaceInfo in interfaces_info -%}
+  {%- set interfaceName = interfaceInfo.interfaceName -%}
+  {{- ("show interfaces " + interfaceName + " extensive | no-more | match \"last|local|phy|desc|error\"\n") | indent(8, True, False) -}}
+{%- endfor -%}
+{{- "\n" -}}

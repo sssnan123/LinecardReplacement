@@ -1,0 +1,4 @@
+Value bgpProcess (\d+)
+
+Start
+  ^router\s+bgp\s+${bgpProcess}

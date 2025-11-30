@@ -1,0 +1,150 @@
++-------------------------------------------------------------------------------------------------+
+### Rollback Plan: FPC {{ fpcNumber }} Replacement: {{ inventory_hostname }} {{ fpc_model }} ###
++-------------------------------------------------------------------------------------------------+
+
+
+
+1) Put device {{ inventory_hostname }} in maintenance mode using:
+
+	https://nseui.muse.vip.ebay.com/device-maintenance
+
+
+
+2) Device cost-out for {{ inventory_hostname }}
+
+2.1) BGP cost-out for {{ inventory_hostname }}
+
+	# Use Device OPS tool to cost out this device
+
+	https://nseui.muse.vip.ebay.com/deviceops
+
+	Device Operation: Cost Out
+	Device Name: {{ inventory_hostname }}
+	Snow Ticket: {{ chg_number }}
+
+	# Device OPS tool is only used to cost out for BGP protocols, please manually execute it if device runs OSPF protocols.
+	# Please execute the following steps if above cost out tool doesn't work.
+
+	# On {{ inventory_hostname }}:
+
+	ping {{ chg_number }}
+
+	{% include "./temp/bgp_costing_out.txt" %}
+
+2.2) Verify traffic has stopped on {{ inventory_hostname }}
+
+	# Traffic:
+
+	https://console.sherlock.io/d/zNLv2bKWz/switch-drill-down?var-Name={{ inventory_hostname }}&orgId=1&refresh=5m
+
+	# On {{ inventory_hostname }}:
+
+	show interfaces | match "Physical|rate"
+
+2.3) Disable all the ports on the bad FPC
+
+	# On {{ inventory_hostname }}:
+
+	{% include "./temp/disabling_ports.txt" %}
+
+
+
+3) Replace FPC {{ fpcNumber }}
+
+	# If at this point two cards have been tried, and neither works, so we will power down the card to minimize impact
+
+3.1) Power off FPC {{ fpcNumber }}
+
+	# On {{ inventory_hostname }}:
+
+	{% include "./temp/powering_off_fpc.txt" %}
+
+
+	# If e-spare works, so we should use the e-spare one to replace
+
+	# Have Site Services send a picture of the e-spare module via slack.
+	# Verify that it is the same model that needs to be inserted into the device.
+
+	# Ask Site Services to swap out bad FPC {{ fpcNumber }} with e-spare FPC {{ fpc_model }}
+	# Ask Site Services to disconnect all the links
+	# Insert e-spare FPC {{ fpc_model }} in {{ inventory_hostname }} in FPC {{ fpcNumber }}
+	# Ask Site Services to connect all the links
+
+3.2) Power on e-spare FPC {{ fpcNumber }}
+
+	# On {{ inventory_hostname }}:
+
+	{% include "./temp/powering_on_fpc.txt" %}
+
+	# Verify power consumption and cooling are within limits
+
+	show environment all | no-more
+
+
+
+4) Device cost-in for {{ inventory_hostname }}
+
+4.1) Enable all the ports on the e-spare card:
+
+	# On {{ inventory_hostname }}:
+
+	{% include "./temp/enabling_ports.txt" %}
+
+4.2) BGP cost-in for {{ inventory_hostname }}
+
+	# Use Device OPS tool to cost in this device
+
+	https://nseui.muse.vip.ebay.com/deviceops
+
+	Device Operation: Cost In
+	Device Name: {{ inventory_hostname }}
+	Snow Ticket: {{ chg_number }}
+
+	# Device OPS tool is only used to cost in for BGP protocols, please manually execute it if device runs OSPF protocols.
+	# Please execute the following steps if above cost in tool doesn't work.
+
+	# On {{ inventory_hostname }}:
+
+	ping {{ chg_number }}
+
+	{% include "./temp/bgp_costing_in.txt" %}
+
+4.3) Verify traffic has resumed on {{ inventory_hostname }}
+
+	# Traffic:
+
+	https://console.sherlock.io/d/zNLv2bKWz/switch-drill-down?var-Name={{ inventory_hostname }}&orgId=1&refresh=5m
+
+	# On {{ inventory_hostname }}:
+
+	show interfaces | match "Physical|rate"
+
+4.4) Put device {{ inventory_hostname }} back to production mode using:
+
+	https://nseui.muse.vip.ebay.com/device-maintenance
+
+
+
+5) Global Checks
+
+	# Perform mandatory post-checks to determine device health and status after changes have been made.
+
+	# On {{ inventory_hostname }}:
+
+	show version invoke-on all-routing-engines | no-more
+	show log messages | last 100 | no-more
+	show chassis alarms | no-more
+	show configuration | display set | no-more
+	show chassis fpc | no-more
+	show chassis routing-engine | no-more
+	show chassis hardware clei-models | no-more
+	show interfaces terse | no-more
+	show lldp neighbors | no-more
+	show lldp neighbors | count
+	show route summary | no-more
+	show bgp summary | no-more
+	show bgp summary | count | no-more
+	show vlans | no-more
+	show vrrp brief | no-more
+	show spanning-tree interface brief | no-more
+	show arp | no-more

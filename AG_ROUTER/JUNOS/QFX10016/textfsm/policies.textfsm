@@ -1,0 +1,5 @@
+Value policyName (.+)
+
+Start
+  ^Configured\s+policies\:
+  ^${policyName} -> Record

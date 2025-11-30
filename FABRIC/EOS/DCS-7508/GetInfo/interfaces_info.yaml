@@ -1,0 +1,40 @@
+---
+- name: Debug command
+  debug:
+    msg: "{{ 'show ip interface brief | grep Ethernet' + lineCardNumber + ' | grep -v admin\\ down' }}"
+
+- name: Run Command "{{ 'show ip interface brief | grep Ethernet' + lineCardNumber + ' | grep -v admin\ down' }}"
+  arista.eos.eos_command:
+    commands:
+      - command: "{{ 'show ip interface brief | grep Ethernet' + lineCardNumber + ' | grep -v admin\\ down' }}"
+  register: result
+
+- name: Get Output
+  set_fact:
+    interfaces: "{{ result.stdout[0] | parse_cli_textfsm('./textfsm/interfaces.textfsm') }}"
+
+- name: Interfaces Info
+  set_fact:
+    interfaces_info: |
+      {%- set interfacesInfo = [] -%}
+      {%- for interface in interfaces -%}
+        {%- set interfaceName = interface.interfaceName -%}
+        {%- set sourceIP = "" -%}
+        {%- set destinationIP = "" -%}
+        {%- set address = interface.address -%}
+        {%- set lastNumber = address[-1] | int -%}
+        {%- if lastNumber % 2 == 0 -%}
+          {%- set sourceIP = address -%}
+          {%- set destinationIP = address[0:-1] + (lastNumber + 1) | string -%}
+        {%- else -%}
+          {%- set sourceIP = address -%}
+          {%- set destinationIP = address[0:-1] + (lastNumber - 1) | string -%}
+        {%- endif -%}
+        {%- set interfaceInfo = {"interfaceName": interfaceName, "sourceIP": sourceIP, "destinationIP": destinationIP} -%}
+        {%- set tmp = interfacesInfo.append(interfaceInfo) -%}
+      {%- endfor -%}
+      {{- interfacesInfo -}}
+
+- name: Print Interfaces Info
+  debug:
+    var: interfaces_info

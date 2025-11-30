@@ -1,0 +1,41 @@
++-------------------------------------------------------------------------------------------------+
+### VERIFICATION PLAN: FPC {{ fpcNumber }} Replacement: {{ inventory_hostname }} {{ fpc_model }} ###
++-------------------------------------------------------------------------------------------------+
+
+
+
+1) Global Checks
+
+	# Perform mandatory post-checks to determine device health and status after changes have been made.
+
+	# On {{ inventory_hostname }}:
+
+	show version invoke-on all-routing-engines | no-more
+	show log messages | last 100 | no-more
+	show chassis alarms | no-more
+	show configuration | display set | no-more
+	show chassis fpc | no-more
+	show chassis routing-engine | no-more
+	show chassis hardware clei-models | no-more
+	show interfaces terse | no-more
+	show lldp neighbors | no-more
+	show lldp neighbors | count
+	show route summary | no-more
+	show bgp summary | no-more
+	show bgp summary | count | no-more
+	show vlans | no-more
+	show vrrp brief | no-more
+	show spanning-tree interface brief | no-more
+	show arp | no-more
+
+
+
+2) Check Traffic
+
+	# Traffic:
+
+	https://console.sherlock.io/d/zNLv2bKWz/switch-drill-down?var-Name={{ inventory_hostname }}&orgId=1&refresh=5m
+
+	# On {{ inventory_hostname }}:
+
+	show interfaces | match "Physical|rate"

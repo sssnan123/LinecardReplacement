@@ -1,0 +1,10 @@
+---
+- name: Generate Costing Out Procedure
+  template:
+    src: costing_out.j2
+    dest: ./temp/costing_out.txt
+
+- name: Generate Costing In Procedure
+  template:
+    src: costing_in.j2
+    dest: ./temp/costing_in.txt

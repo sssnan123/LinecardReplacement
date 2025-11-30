@@ -1,0 +1,4 @@
+Value deviceModel (.+)
+
+Start
+  ^Model\:\s+${deviceModel}

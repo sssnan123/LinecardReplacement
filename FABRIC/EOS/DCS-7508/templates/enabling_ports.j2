@@ -1,0 +1,26 @@
+{{- "configure terminal\n" -}}
+{{- "\n" -}}
+{%- for interfaceInfo in interfaces_info -%}
+  {%- set interfaceName = interfaceInfo.interfaceName -%}
+  {{- ("interface " + interfaceName + "\n") | indent(8, True, False) -}}
+  {{- "no shutdown\n" | indent(8, True, False) -}}
+  {{- "\n" -}}
+{%- endfor -%}
+{{- "end\n" | indent(8, True, False) -}}
+{{- "write memory\n" | indent(8, True, False) -}}
+{{- "\n" -}}
+{{- "# Verify the interfaces are up\n" | indent(8, True, False) -}}
+{{- "\n" -}}
+{%- for interfaceInfo in interfaces_info -%}
+  {%- set interfaceName = interfaceInfo.interfaceName -%}
+  {{- ("show interfaces " + interfaceName + " | no-more\n") | indent(8, True, False) -}}
+  {{- "\n" -}}
+{%- endfor -%}
+{{- "# Verify no packet loss\n" | indent(8, True, False) -}}
+{{- "\n" -}}
+{%- for interfaceInfo in interfaces_info -%}
+  {%- set sourceIP = interfaceInfo.sourceIP -%}
+  {%- set destinationIP = interfaceInfo.destinationIP -%}
+  {{- ("ping " + destinationIP + " source " + sourceIP + " repeat 100 size 8972 df-bit\n") | indent(8, True, False) -}}
+  {{- "\n" -}}
+{%- endfor -%}

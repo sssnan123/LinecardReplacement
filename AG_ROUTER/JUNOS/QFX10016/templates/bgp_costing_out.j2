@@ -1,0 +1,70 @@
+{{- "configure exclusive\n" -}}
+{{- "\n" -}}
+{{- "show | compare\n" | indent(8, True, False) -}}
+{{- "\n" -}}
+{{- "# Check for any uncommitted changes\n" | indent(8, True, False) -}}
+{{- "\n" -}}
+{{- ("commit comment pre-" + chg_number +  "\n") | indent(8, True, False) -}}
+{{- "\n" -}}
+{{- ("# DELETE CURRENT BGP POLICIES:\n") | indent(8, True, False) -}}
+{{- "\n" -}}
+{%- for bgpGroupInfo in bgpGroupsInfo -%}
+  {%- set groupName = bgpGroupInfo.groupName -%}
+  {%- set import = bgpGroupInfo.import -%}
+  {%- set export = bgpGroupInfo.export -%}
+  {%- for name in import -%}
+    {%- if "COSTOUT" not in name -%}
+      {%- set command = "delete protocols bgp group " + groupName + " import " + name -%}
+      {{- (command + "\n") | indent(8, True, False) -}}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for name in export -%}
+    {%- if "COSTOUT" not in name -%}
+      {%- set command = "delete protocols bgp group " + groupName + " export " + name -%}
+      {{- (command + "\n") | indent(8, True, False) -}}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endfor -%}
+{{ "\n" }}
+{{- ("# ADD BGP COSTING OUT POLICIES:\n") | indent(8, True, False) -}}
+{{- "\n" -}}
+{%- for bgpGroupInfo in bgpGroupsInfo -%}
+  {%- set groupName = bgpGroupInfo.groupName -%}
+  {%- set import = bgpGroupInfo.import -%}
+  {%- set export = bgpGroupInfo.export -%}
+  {%- for name in import -%}
+    {%- if "COSTOUT" in name -%}
+      {%- set command = "set protocols bgp group " + groupName + " import " + name -%}
+      {{- (command + "\n") | indent(8, True, False) -}}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for name in export -%}
+    {%- if "COSTOUT" in name -%}
+      {%- set command = "set protocols bgp group " + groupName + " export " + name -%}
+      {{- (command + "\n") | indent(8, True, False) -}}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endfor -%}
+{{- "\n" -}}
+{{- "commit check\n" | indent(8, True, False) -}}
+{{- "show | compare\n" | indent(8, True, False) -}}
+{{- "commit and-quit\n" | indent(8, True, False) -}}
+{{- "\n" -}}
+{%- for bgpGroupInfo in bgpGroupsInfo -%}
+  {%- set groupName = bgpGroupInfo.groupName -%}
+  {%- set member = bgpGroupInfo.member -%}
+  {%- set peerAS = bgpGroupInfo.peerAS -%}
+  {%- if "BMC_V6" not in groupName -%}
+    {%- if "V6" in groupName -%}
+      {{- ("# Verify AS " + peerAS + " is costed out, " + groupName + ", ipv6 on " + inventory_hostname + "\n") | indent(8, True, False) -}}
+    {%- else -%}
+      {{- ("# Verify AS " + peerAS + " is costed out, " + groupName + ", ipv4 on " + inventory_hostname + "\n") | indent(8, True, False) -}}
+    {%- endif -%}
+    {{- "\n" -}}
+    {{- ("show bgp summary\n") | indent(8, True, False) -}}
+    {{- ("show bgp summary | match " + peerAS  + "\n") | indent(8, True, False) -}}
+    {{- ("show route receive-protocol bgp " + member + "\n") | indent(8, True, False) -}}
+    {{- ("show route advertising-protocol bgp " + member + "\n") | indent(8, True, False) -}}
+    {{- "\n" -}}
+  {%- endif -%}
+{%- endfor -%}

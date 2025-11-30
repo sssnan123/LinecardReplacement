@@ -1,0 +1,29 @@
+---
+- name: Get Interfaces Info
+  set_fact:
+    interfaces_info: |-
+      {%- set interfacesInfo = [] -%}
+      {%- set interfaceConfig = device_config.stdout[0].configuration.interfaces.interface -%}
+      {%- for config in interfaceConfig -%}
+        {%- set interfaceName = config["name"] -%}
+        {%- set address = config["unit"][0]["family"]["inet"]["address"][0]["name"].split("/")[0] -%}
+        {%- set lastNumber = address[-1] | int -%}
+        {%- set sourceIP = "" -%}
+        {%- set destinationIP = "" -%}
+        {%- if lastNumber % 2 == 0 -%}
+          {%- set sourceIP = address -%}
+          {%- set destinationIP = address[0:-1] + (lastNumber + 1) | string -%}
+        {%- else -%}
+          {%- set sourceIP = address -%}
+          {%- set destinationIP = address[0:-1] + (lastNumber - 1) | string -%}
+        {%- endif -%}
+        {%- if "-" + fpcNumber in interfaceName -%}
+          {%- set interfaceInfo = {"interfaceName": interfaceName, "sourceIP": sourceIP, "destinationIP": destinationIP} -%}
+          {%- set temp = interfacesInfo.append(interfaceInfo) -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{- interfacesInfo -}}
+
+- name: Print Interfaces Info
+  debug:
+    var: interfaces_info

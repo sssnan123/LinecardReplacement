@@ -1,0 +1,34 @@
+---
+- name: Get BGP Process
+  import_tasks: bgp_process.yaml
+
+- name: Get BGP Peer Groups
+  import_tasks: bgp_peer_groups.yaml
+
+- name: Get Route Maps
+  import_tasks: route_maps.yaml
+
+- name: Get BGP Peer Groups Info
+  set_fact:
+    bgpPeerGroupsInfo: |
+      {%- set bgpPeerGroupsInfo = [] -%}
+      {%- for bgpPeerGroup in bgp_peer_groups -%}
+      {%- set groupName = bgpPeerGroup.groupName -%}
+      {%- set member = bgpPeerGroup.members[0] -%}
+      {%- set peerAS = bgpPeerGroup.peerAS -%}
+      {%- set routeMaps = [] -%}
+      {%- set as = groupName.split("_")[1] -%}
+      {%- for routeMap in route_maps -%}
+        {%- set mapName = routeMap.mapName -%}
+        {%- if as in mapName -%}
+          {%- set tmp = routeMaps.append(mapName) -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {%- set bgpPeerGroupInfo = {"groupName": groupName, "member": member, "peerAS": peerAS, "routeMaps": routeMaps} -%}
+      {%- set tmp = bgpPeerGroupsInfo.append(bgpPeerGroupInfo) -%}
+      {%- endfor -%}
+      {{- bgpPeerGroupsInfo -}}
+
+- name: Print BGP Peer Groups Info
+  debug:
+    var: bgpPeerGroupsInfo

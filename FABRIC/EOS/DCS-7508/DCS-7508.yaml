@@ -1,0 +1,56 @@
+---
+- name: Get Device Info
+  hosts: switch_name
+  connection: network_cli
+  vars:
+    ansible_network_os: arista.eos.eos
+  vars_prompt:
+    - name: lineCardNumber
+      prompt: Which Line Card? 
+      private: no
+    - name: chg_number
+      prompt: Please Enter the CHG number
+      private: no
+
+  tasks:
+    - name: Determine If Current Device Is Supported
+      arista.eos.eos_command:
+        commands: "show version"
+      register: result
+
+    - name: Get Output
+      set_fact:
+        device_model: "{{ (result.stdout[0] | parse_cli_textfsm('./textfsm/device_model.textfsm'))[0].deviceModel }}"
+
+    - name: Print Device Model
+      debug:
+        var: device_model
+
+    - name: Unsupported Model
+      fail: 
+        msg: "Unsupported Model"
+      when: device_model != "DCS-7508"
+
+    - name: Get Hardware Info
+      import_tasks: GetInfo/hardware_info.yaml
+
+    - name: Get BGP Peer Groups Info
+      import_tasks: GetInfo/bgp_peer_groups_info.yaml
+
+    - name: Generate Traffic Movement Procedure
+      import_tasks: Procedure/traffic_movement.yaml
+
+    - name: Get Interfaces Info
+      import_tasks: GetInfo/interfaces_info.yaml
+
+    - name: Generate Ports Management Procedure
+      import_tasks: Procedure/ports_management.yaml
+
+    - name: Generate Line Card Power Management Procedure
+      import_tasks: Procedure/line_card_power_management.yaml
+
+    - name: Generate Plans
+      import_tasks: Post/plans.yaml
+
+    - name: Post Request
+      import_tasks: Post/request.yaml

@@ -1,0 +1,38 @@
++---------------------------------------------------------------------------------------------------+
+### VERIFICATION PLAN: Line Card {{ lineCardNumber }} Replacement: {{ inventory_hostname }} {{ device_model }} ###
++---------------------------------------------------------------------------------------------------+
+
+
+
+1) Global Checks
+
+	# Perform mandatory post-checks to determine device health and status after changes have been made.
+
+	# On {{ inventory_hostname }}:
+
+	show version | no-more
+	show logging 100 | no-more
+	show module | no-more
+	show environment all | no-more
+	show processes top
+	show lldp neighbors | no-more
+	show interfaces status | include connected | no-more
+	show interfaces status | include notconnect | no-more
+	show interfaces status | include disabled | no-more
+	show interfaces status | no-more | exclude disabled | TRANS | TRUNK | notconn | unknown
+	show port-channel summary
+	show spanning-tree detail
+	show ip route summary | no-more
+	show ipv6 route summary | no-more
+	show ip bgp summary | no-more
+	show ipv6 bgp summary | no-more
+
+2) Check Traffic
+
+	# Traffic:
+
+	https://console.sherlock.io/d/zNLv2bKWz/switch-drill-down?var-Name={{ inventory_hostname }}&orgId=1&refresh=5m
+
+	# On {{ inventory_hostname }}:
+
+	show interfaces | match "Physical|rate"

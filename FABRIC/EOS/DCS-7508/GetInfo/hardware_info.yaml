@@ -1,0 +1,14 @@
+---
+- name: Run Command "{{ 'show inventory | include Linecard' + lineCardNumber }}"
+  arista.eos.eos_command:
+    commands:
+    - command: "{{ 'show inventory | include Linecard' + lineCardNumber }}"
+  register: result
+
+- name: Get Output
+  set_fact:
+    line_card_model: "{{ (result.stdout[0] | parse_cli_textfsm('./textfsm/line_card_model.textfsm'))[0].lineCardModel }}"
+
+- name: "{{ 'Print Line Card ' + lineCardNumber + ' Model' }}"
+  debug:
+    var: line_card_model

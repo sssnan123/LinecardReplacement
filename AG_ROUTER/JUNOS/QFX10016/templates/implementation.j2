@@ -1,0 +1,222 @@
++-------------------------------------------------------------------------------------------------+
+### Action Plan: FPC {{ fpcNumber }} Replacement: {{ inventory_hostname }} {{ fpc_model }} ###
++-------------------------------------------------------------------------------------------------+
+
+
+
+1) Preparation Steps:
+
+1.1) Dial in to the SEC bridge:
+
+	# Inform TDO about the CHNGE and wait for his/her go-ahead.
+
+	# Use the link below to log into the (eBay SEC) bridge
+	# go/bridge
+
+	# Change the status of the CR to "Ready to Start"
+
+1.2) Get Device Console Access:
+
+	# Log in to slc-nms-vm1 using your PET credentials,
+	# Use the below commands to get console access of the devices.
+
+	console -d {{ inventory_hostname }}
+
+	# Log in to the device via console using your own login credentials when prompted.
+
+1.3) Back up the configuration of the device
+
+	# Back up the configuration of the device
+
+	https://nseui.muse.vip.ebay.com/config-backup
+
+	Enter device name: {{ inventory_hostname }} > Press Initiate Backup button
+
+1.4) Check pre-change netranger traffic
+
+	# Traffic:
+
+	https://console.sherlock.io/d/zNLv2bKWz/switch-drill-down?var-Name={{ inventory_hostname }}&orgId=1&refresh=5m
+
+1.5) Global checks
+
+	#######################################################################################
+	# EXECUTE THE FOLLOWING GLOBAL CHECK COMMANDS FROM SSH ONLY, DO NOT EXECUTE ON CONSOLE.
+	#######################################################################################
+
+	# Perform mandatory global checks to determine device health and status prior to making any changes.
+
+	# On {{ inventory_hostname }}:
+
+	show version invoke-on all-routing-engines | no-more
+	show log messages | last 100 | no-more
+	show chassis alarms | no-more
+	show configuration | display set | no-more
+	show chassis fpc | no-more
+	show chassis routing-engine | no-more
+	show chassis hardware clei-models | no-more
+	show interfaces terse | no-more
+	show lldp neighbors | no-more
+	show lldp neighbors | count
+	show route summary | no-more
+	show bgp summary | no-more
+	show bgp summary | count | no-more
+	show vlans | no-more
+	show vrrp brief | no-more
+	show spanning-tree interface brief | no-more
+	show arp | no-more
+
+1.6) Put device {{ inventory_hostname }} in maintenance mode using:
+
+	https://nseui.muse.vip.ebay.com/device-maintenance
+
+
+
+2) Device cost-out for {{ inventory_hostname }}
+
+2.1) BGP cost-out for {{ inventory_hostname }}
+
+	# Use Device OPS tool to cost out this device
+
+	https://nseui.muse.vip.ebay.com/deviceops
+
+	Device Operation: Cost Out
+	Device Name: {{ inventory_hostname }}
+	Snow Ticket: {{ chg_number }}
+
+	# Device OPS tool is only used to cost out for BGP protocols, please manually execute it if device runs OSPF protocols.
+	# Please execute the following steps if above cost out tool doesn't work.
+
+	# On {{ inventory_hostname }}:
+
+	ping {{ chg_number }}
+
+	{% include "./temp/bgp_costing_out.txt" %}
+
+	# If a rollback is needed refer to step 4.2 in rollback plan
+
+2.2) Verify traffic has stopped on {{ inventory_hostname }}
+
+	# Traffic:
+
+	https://console.sherlock.io/d/zNLv2bKWz/switch-drill-down?var-Name={{ inventory_hostname }}&orgId=1&refresh=5m
+
+	# On {{ inventory_hostname }}:
+
+	show interfaces | match "Physical|rate"
+
+2.3) Disable all the ports on the bad FPC
+
+	# On {{ inventory_hostname }}:
+
+	{% include "./temp/disabling_ports.txt" %}
+
+	# If a rollback is needed refer to step 4.1 in rollback plan
+
+
+
+3) Replace FPC {{ fpcNumber }}
+
+3.1) Power off FPC {{ fpcNumber }}
+
+	# On {{ inventory_hostname }}:
+
+	{% include "./temp/powering_off_fpc.txt" %}
+
+	# If a rollback is needed refer to step 3.2 in rollback plan
+
+
+	# Have Site Services send a picture of the new module via slack.
+	# Verify that it is the same model that needs to be inserted into the device.
+
+	# Ask Site Services to swap out bad FPC {{ fpcNumber }} with new FPC {{ fpc_model }}
+	# Ask Site Services to disconnect all the links
+	# Insert new FPC {{ fpc_model }} in {{ inventory_hostname }} in FPC {{ fpcNumber }}
+	# Ask Site Services to connect all the links
+
+3.2) Power on FPC {{ fpcNumber }}
+
+	# On {{ inventory_hostname }}:
+
+	{% include "./temp/powering_on_fpc.txt" %}
+
+	# Verify power consumption and cooling are within limits
+
+	show environment all | no-more
+
+	# If a rollback is needed refer to step 3.1 in rollback plan
+
+	# If card does not come online, have SS replace it with the same model card from spares. If the spare does not function either, proceed to rollback.
+
+
+
+4) Device cost-in for {{ inventory_hostname }}
+
+4.1) Enable all the ports on the new FPC:
+
+	# On {{ inventory_hostname }}:
+
+	{% include "./temp/enabling_ports.txt" %}
+
+	# If a rollback is needed refer to step 2.4 in rollback plan
+
+4.2) BGP cost-in for {{ inventory_hostname }}
+
+	# Use Device OPS tool to cost in this device
+
+	https://nseui.muse.vip.ebay.com/deviceops
+
+	Device Operation: Cost In
+	Device Name: {{ inventory_hostname }}
+	Snow Ticket: {{ chg_number }}
+
+	# Device OPS tool is only used to cost in for BGP protocols, please manually execute it if device runs OSPF protocols.
+	# Please execute the following steps if above cost in tool doesn't work.
+
+	# On {{ inventory_hostname }}:
+
+	ping {{ chg_number }}
+
+	{% include "./temp/bgp_costing_in.txt" %}
+
+	# If a rollback is needed refer to step 2.2 in rollback plan
+
+4.3) Verify traffic has resumed on {{ inventory_hostname }}
+
+	# Traffic:
+
+	https://console.sherlock.io/d/zNLv2bKWz/switch-drill-down?var-Name={{ inventory_hostname }}&orgId=1&refresh=5m
+
+	# On {{ inventory_hostname }}:
+
+	show interfaces | match "Physical|rate"
+
+4.4) Put device {{ inventory_hostname }} back to production mode using:
+
+	https://nseui.muse.vip.ebay.com/device-maintenance
+
+
+
+5) Global Checks
+
+	# Perform mandatory post-checks to determine device health and status after changes have been made.
+
+	# On {{ inventory_hostname }}:
+
+	show version invoke-on all-routing-engines | no-more
+	show log messages | last 100 | no-more
+	show chassis alarms | no-more
+	show configuration | display set | no-more
+	show chassis fpc | no-more
+	show chassis routing-engine | no-more
+	show chassis hardware clei-models | no-more
+	show interfaces terse | no-more
+	show lldp neighbors | no-more
+	show lldp neighbors | count
+	show route summary | no-more
+	show bgp summary | no-more
+	show bgp summary | count | no-more
+	show vlans | no-more
+	show vrrp brief | no-more
+	show spanning-tree interface brief | no-more
+	show arp | no-more

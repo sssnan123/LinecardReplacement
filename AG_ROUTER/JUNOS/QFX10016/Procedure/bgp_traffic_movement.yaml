@@ -1,0 +1,10 @@
+---
+- name: Generate BGP Costing Out Procedure
+  template:
+    src: bgp_costing_out.j2
+    dest: ./temp/bgp_costing_out.txt
+
+- name: Generate BGP Costing In Procedure
+  template:
+    src: bgp_costing_in.j2
+    dest: ./temp/bgp_costing_in.txt

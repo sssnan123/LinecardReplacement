@@ -1,0 +1,5 @@
+Value interfaceName (Ethernet\d+\/\d+\/\d+)
+Value address (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})
+
+Start
+  ^${interfaceName}\s+${address} -> Record

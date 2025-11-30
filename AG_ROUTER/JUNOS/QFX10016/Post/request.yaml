@@ -1,0 +1,72 @@
+---
+- name: Get Payloads
+  set_fact:
+    implementation: "{{ lookup('file','temp/implementation.txt') }}"
+    rollback: "{{ lookup('file','temp/rollback.txt') }}"
+    verification: "{{ lookup('file','temp/verification.txt') }}"
+    current_user: "{{ lookup('pipe','whoami') }}"
+    short_description: "{{ inventory_hostname[0:3] | upper + ' :: MOP :: FPC ' + fpcNumber + ' Replacement for ' + inventory_hostname }}"
+    start_date: "{{ lookup('pipe', 'date -u \"+%Y-%m-%d %H:%M\" -d \"+1 weeks\"') }}"
+    justification: |-
+      • Justification to support why CHNGE is required?
+      Ports are down on switch. Replace this FPC to fix issue.
+
+      • Risk of impact if CHNGE does not occur?
+      Ports are down on switch.
+
+      • Risk of problem occurring resulting in impact during the CHNGE?
+      Risk is associated with every manual CHG, in case of impact the CHG will be rolled back.
+
+      • Services (applications) dependent on the device?
+      Services under {{ inventory_hostname }}
+      INC ticket: 
+      Juniper case: 
+      Juniper RMA number: 
+      Site replace ticket: 
+      e-spare AT: 
+    cis: |-
+      {%- set cis = [inventory_hostname] -%}
+      {{- cis -}}
+
+- name: Update SNOW
+  environment:
+    SSL_CERT_FILE: /usr/share/ca-certificates/eBayROOT/eBay_ROOT_CA.crt
+  uri:
+    url: https://ebaysnow.vip.ebay.com/api/message/send
+    method: POST
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+      Authorization: Basic dV9zYV9lYmF5X3Nub3dfbmV0OlJlc3RpbnBlYWNldHJhY2UyMDIw
+    body:
+      source: "Neteng"
+      table: "x_ebay_change_mgmt_import_change_api_data"
+      payload:
+        short_description: "{{- short_description -}}"
+        category: "Network Eng Site"
+        change_duration: "00 02:00:00"
+        type: "Isolation/Recovery"
+        type_of_change: "normal"
+        subtype: "FPC/Module"
+        start_date: "{{- start_date -}}"
+        assigned_to: "{{- current_user -}}"
+        requested_by: "{{- current_user -}}"
+        cis: "{{- cis -}}"
+        x_ebay_change_mgmt_not_able_to_find_ci: "true"
+        implementation_plan : "{{- implementation -}}"
+        rollback_plan: "{{- rollback -}}"
+        verification_plan: "{{- verification -}}"
+        business_justification: "{{- justification -}}"
+        environment: "Production"
+        assigned_group: "IRT"
+        human_trigger: "True"
+        status: "New"
+        task_number: "{{- chg_number -}}"
+        risk: "Low"
+    body_format: json
+    status_code: 200
+  register: response
+
+- name: Print Response
+  debug:
+    var: response

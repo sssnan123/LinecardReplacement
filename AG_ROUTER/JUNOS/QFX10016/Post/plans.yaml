@@ -1,0 +1,15 @@
+---
+- name: Implementation
+  template:
+    src: implementation.j2
+    dest: temp/implementation.txt
+
+- name: Rollback
+  template:
+    src: rollback.j2
+    dest: temp/rollback.txt
+
+- name: Verification
+  template:
+    src: verification.j2
+    dest: temp/verification.txt

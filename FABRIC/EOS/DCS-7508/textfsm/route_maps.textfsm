@@ -1,0 +1,4 @@
+Value mapName (.+)
+
+Start
+  ^route\-map\s+${mapName} -> Record
